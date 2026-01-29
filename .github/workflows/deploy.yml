@@ -2,7 +2,7 @@ name: Deploy to AWS (Terraform + Ansible)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -39,11 +39,8 @@ jobs:
             -backend-config="dynamodb_table=${TABLE}" \
             -backend-config="encrypt=true"
 
-      - name: Force unlock (only if stuck)
-        working-directory: terraform
-        run: |
-          terraform init -reconfigure -backend-config=backend.hcl
-          terraform force-unlock -force 2e94d9f1-b1d7-3572-8267-a029cb50ac6f
+      # IMPORTANT: remove auto force-unlock from CI (dangerous + can fail).
+      # Do unlock manually only when needed.
 
       - name: Terraform Apply
         working-directory: terraform
@@ -54,7 +51,7 @@ jobs:
         id: tfout
         working-directory: terraform
         run: |
-          echo "public_ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
+          echo "public_ip=$(terraform output -raw public_ip)" >> "$GITHUB_OUTPUT"
 
       - name: Install Ansible
         run: |
@@ -68,51 +65,24 @@ jobs:
           chmod 600 ~/.ssh/devops-beginner-key.pem
 
       - name: Create Ansible inventory
-        working-directory: terraform
         run: |
-         set -e
+          mkdir -p ansible
+          cat > ansible/inventory.ini <<'INV'
+          [web]
+          ${{ steps.tfout.outputs.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/devops-beginner-key.pem
+          INV
 
-         echo "PWD=$(pwd)"
-         echo "Repo root:"
-         ls -la ..
+          echo "Inventory created:"
+          cat ansible/inventory.ini
 
-         echo "Create ansible dir at repo root"
-         mkdir -p ../ansible
-
-         echo "Write inventory"
-         cat > ../ansible/inventory.ini <<'INV'
-     [web]
-     ${PUBLIC_IP}
-     INV
-
-        echo "Inventory created:"
-        ls -la ../ansible
-        cat ../ansible/inventory.ini
-
-
-
-# -------------------------------
-# Ansible ping test
-# -------------------------------
       - name: Ansible ping
-        working-directory: terraform
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible -i ../ansible/inventory.ini web -m ping \
-           -u ubuntu \
-           --private-key ../devops-beginner-key.pem \
-           --ssh-common-args='-o StrictHostKeyChecking=no'
+          ansible -i ansible/inventory.ini web -m ping
 
-
-# -------------------------------
-# Ansible deploy
-# -------------------------------
-       - name: Ansible deploy
-         working-directory: terraform
-         run: |
-           ansible-playbook \
-            -i ../ansible/inventory.ini \
-            ../ansible/deploy.yml \
-             -u ubuntu \
-            --private-key ../devops-beginner-key.pem \
-            --ssh-common-args='-o StrictHostKeyChecking=no'
-
+      - name: Ansible deploy
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
