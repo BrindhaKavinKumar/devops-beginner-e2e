@@ -68,24 +68,47 @@ jobs:
           chmod 600 ~/.ssh/devops-beginner-key.pem
 
       - name: Create Ansible inventory
+        working-directory: terraform
         run: |
-          mkdir -p ansible
+          echo "Current dir:"
+          pwd
           ls -la
-          ls -la ansible || true
-          ls -la ../ansible || true
-          cat > ansible/inventory.ini <<'INV'
-          [web]
-          ${PUBLIC_IP}
-          INV
 
+          echo "Creating ansible directory at repo root"
+          mkdir -p ../ansible
+
+          echo "Writing inventory"
+          cat > ../ansible/inventory.ini <<'INV'
+      [web]
+      ${PUBLIC_IP}
+      INV
+
+          echo "Inventory created:"
+          cat ../ansible/inventory.ini
+
+
+# -------------------------------
+# Ansible ping test
+# -------------------------------
       - name: Ansible ping
-       working-directory: terraform
-       run: ansible -i ../ansible/inventory.ini web -m ping
+        working-directory: terraform
+        run: |
+          ansible -i ../ansible/inventory.ini web -m ping \
+           -u ubuntu \
+           --private-key ../devops-beginner-key.pem \
+           --ssh-common-args='-o StrictHostKeyChecking=no'
 
-      - name: Ansible deploy
-       working-directory: terraform
-       run: ansible-playbook -i ../ansible/inventory.ini ../ansible/deploy.yml
 
-
-
+# -------------------------------
+# Ansible deploy
+# -------------------------------
+       - name: Ansible deploy
+         working-directory: terraform
+         run: |
+           ansible-playbook \
+            -i ../ansible/inventory.ini \
+            ../ansible/deploy.yml \
+             -u ubuntu \
+            --private-key ../devops-beginner-key.pem \
+            --ssh-common-args='-o StrictHostKeyChecking=no'
 
