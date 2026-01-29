@@ -74,9 +74,8 @@ jobs:
           mkdir -p ../ansible
           cat > ../ansible/inventory.ini <<'INV'
           [web]
-          ${PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem INV
-
-
+          ${PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem
+          INV
 
 
       - name: Ansible Deploy
