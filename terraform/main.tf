@@ -22,7 +22,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_security_group" "web_sg" {
-  name        = "devops-beginner-web-sg"
+  name_prefix        = "devops-beginner-web-sg"
   description = "Allow SSH and HTTP"
 
   ingress {
