@@ -70,21 +70,25 @@ jobs:
       - name: Create Ansible inventory
         working-directory: terraform
         run: |
-          echo "Current dir:"
-          pwd
-          ls -la
+         set -e
 
-          echo "Creating ansible directory at repo root"
-          mkdir -p ../ansible
+         echo "PWD=$(pwd)"
+         echo "Repo root:"
+         ls -la ..
 
-          echo "Writing inventory"
-          cat > ../ansible/inventory.ini <<'INV'
-      [web]
-      ${PUBLIC_IP}
-      INV
+         echo "Create ansible dir at repo root"
+         mkdir -p ../ansible
 
-          echo "Inventory created:"
-          cat ../ansible/inventory.ini
+         echo "Write inventory"
+         cat > ../ansible/inventory.ini <<'INV'
+     [web]
+     ${PUBLIC_IP}
+     INV
+
+        echo "Inventory created:"
+        ls -la ../ansible
+        cat ../ansible/inventory.ini
+
 
 
 # -------------------------------
