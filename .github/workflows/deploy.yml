@@ -62,16 +62,21 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/devops-beginner-key.pem
           chmod 600 ~/.ssh/devops-beginner-key.pem
 
-      - name: Create Ansible inventory
-        run: |
-          cat > ansible/inventory.ini <<INV
-          [web]
-          ${{ steps.tfout.outputs.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/devops-beginner-key.pem
-          INV
+     - name: Create Ansible inventory
+  shell: bash
+  run: |
+    pwd
+    ls -la
+    mkdir -p ../ansible
+    cat > ../ansible/inventory.ini <<'INV'
+    [web]
+    ${{ steps.get_ip.outputs.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=./devops-beginner-key.pem
+    INV
+
 
       - name: Ansible Deploy
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible -i ansible/inventory.ini web -m ping
-          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
+          ansible -i ../ansible/inventory.ini web -m ping
+          ansible-playbook -i ../ansible/inventory.ini ansible/deploy.yml
