@@ -68,19 +68,21 @@ jobs:
           chmod 600 ~/.ssh/devops-beginner-key.pem
 
       - name: Create Ansible inventory
+        working-directory: terraform
         run: |
-          pwd
-          ls -la
           mkdir -p ../ansible
           cat > ../ansible/inventory.ini <<'INV'
           [web]
-          ${PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem
+          ${EC2_PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem
           INV
+     - name: Ansible ping
+       working-directory: terraform
+       run: ansible -i ../ansible/inventory.ini web -m ping
+
+     - name: Ansible deploy
+       working-directory: terraform
+       run: ansible-playbook -i ../ansible/inventory.ini ../ansible/deploy.yml
 
 
-      - name: Ansible Deploy
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-        run: |
-          ansible -i ../ansible/inventory.ini web -m ping
-          ansible-playbook -i ../ansible/inventory.ini ../ansible/deploy.yml
+
+
