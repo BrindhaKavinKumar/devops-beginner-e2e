@@ -63,12 +63,14 @@ jobs:
           chmod 600 ~/.ssh/devops-beginner-key.pem
 
       - name: Create Ansible inventory
-  run: |
-    mkdir -p ansible
-    cat > ansible/inventory.ini <<'INV'
-    [web]
-    ${PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem
-    INV
+        run: |
+          pwd
+          ls -la
+          mkdir -p ../ansible
+          cat > ../ansible/inventory.ini <<'INV'
+          [web]
+          ${PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../devops-beginner-key.pem INV
+
 
 
 
@@ -77,4 +79,4 @@ jobs:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
           ansible -i ../ansible/inventory.ini web -m ping
-          ansible-playbook -i ../ansible/inventory.ini ansible/deploy.yml
+          ansible-playbook -i ../ansible/inventory.ini ../ansible/deploy.yml
