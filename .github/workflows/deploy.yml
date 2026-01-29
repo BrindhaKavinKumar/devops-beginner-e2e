@@ -70,6 +70,9 @@ jobs:
       - name: Create Ansible inventory
         run: |
           mkdir -p ansible
+          ls -la
+          ls -la ansible || true
+          ls -la ../ansible || true
           cat > ansible/inventory.ini <<'INV'
           [web]
           ${PUBLIC_IP}
