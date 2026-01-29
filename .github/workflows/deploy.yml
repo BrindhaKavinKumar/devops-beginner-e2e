@@ -25,22 +25,15 @@ jobs:
         with:
           terraform_version: 1.7.5
 
-      - name: Terraform Init (S3 backend)
+      - name: Terraform Init
         working-directory: terraform
         run: |
-          REGION="$(printf '%s' "${{ secrets.AWS_REGION }}" | tr -d '\r\n')"
-          BUCKET="$(printf '%s' "${{ secrets.TF_STATE_BUCKET }}" | tr -d '\r\n')"
-          TABLE="$(printf '%s' "${{ secrets.TF_LOCK_TABLE }}" | tr -d '\r\n')"
-
           terraform init \
-            -backend-config="bucket=${BUCKET}" \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=devops-beginner-e2e/terraform.tfstate" \
-            -backend-config="region=${REGION}" \
-            -backend-config="dynamodb_table=${TABLE}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
             -backend-config="encrypt=true"
-
-      # IMPORTANT: remove auto force-unlock from CI (dangerous + can fail).
-      # Do unlock manually only when needed.
 
       - name: Terraform Apply
         working-directory: terraform
@@ -72,7 +65,6 @@ jobs:
           ${{ steps.tfout.outputs.public_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/devops-beginner-key.pem
           INV
 
-          echo "Inventory created:"
           cat ansible/inventory.ini
 
       - name: Ansible ping
