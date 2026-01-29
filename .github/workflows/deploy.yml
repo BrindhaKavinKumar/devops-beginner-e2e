@@ -28,16 +28,18 @@ jobs:
       - name: Terraform Init (S3 backend)
         working-directory: terraform
         run: |
-          REGION="$(printf '%s' '${{ secrets.AWS_REGION }}' | tr -d '\r\n')"
+          AWSREGION="$(printf '%s' '${{ secrets.AWS_REGION }}' | tr -d '\r\n')"
+          BACKENDREGION="$(printf '%s' '${{ secrets.TF_BACKEND_REGION }}' | tr -d '\r\n')"
           BUCKET="$(printf '%s' '${{ secrets.TF_STATE_BUCKET }}' | tr -d '\r\n')"
           TABLE="$(printf '%s' '${{ secrets.TF_LOCK_TABLE }}' | tr -d '\r\n')"
 
           terraform init \
             -backend-config="bucket=${BUCKET}" \
             -backend-config="key=devops-beginner-e2e/terraform.tfstate" \
-            -backend-config="region=${REGION}" \
+            -backend-config="region=${BACKENDREGION}" \
             -backend-config="dynamodb_table=${TABLE}" \
             -backend-config="encrypt=true"
+
 
 
       - name: Terraform Apply
