@@ -8,9 +8,16 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
 
+# -------------------------
+# Variables
+# -------------------------
+
+# -------------------------
+# Get latest Ubuntu 22.04 AMI
+# -------------------------
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
@@ -21,9 +28,34 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# -------------------------
+# Security Group (SSH + HTTP)
+# -------------------------
 resource "aws_security_group" "web_sg" {
-  name_prefix        = "devops-beginner-web-sg"
+  name        = "devops-beginner-web-sg"
   description = "Allow SSH and HTTP"
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 
   ingress {
     description = "SSH"
@@ -47,8 +79,15 @@ resource "aws_security_group" "web_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "devops-beginner-web-sg"
+  }
 }
 
+# -------------------------
+# EC2 Instance
+# -------------------------
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
@@ -60,6 +99,10 @@ resource "aws_instance" "web" {
   }
 }
 
+# -------------------------
+# Output
+# -------------------------
 output "public_ip" {
   value = aws_instance.web.public_ip
 }
+
