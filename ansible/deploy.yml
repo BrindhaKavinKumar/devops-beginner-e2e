@@ -93,17 +93,20 @@
         systemctl stop nginx 2>/dev/null || true
         systemctl stop apache2 2>/dev/null || true
 
-        echo "== Kill any container publishing port 80 =="
-        docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | grep ':80->' || true
-        IDS=$(docker ps -q --filter "publish=80")
-        if [ -n "$IDS" ]; then docker rm -f $IDS; fi
+        echo "== Remove ANY container publishing port 80 =="
+        IDS="$(docker ps -q --filter "publish=80")"
+        if [ -n "$IDS" ]; then
+          docker rm -f $IDS
+        fi
+        
 
-        echo "== Remove old 'web' container if exists =="
-        docker rm -f web 2>/dev/null || true
+    echo "== Remove old 'web' container name if exists =="
+    docker rm -f web 2>/dev/null || true
 
-        echo "== Run nginx on port 80 =="
-        docker run -d --name web --restart unless-stopped -p 80:80 nginx:alpine
+    echo "== Run nginx on port 80 =="
+    docker run -d --name web --restart unless-stopped -p 80:80 nginx:alpine
 
-        echo "== Verify locally =="
-        curl -I http://127.0.0.1 | head -n 1
+    echo "== Verify locally =="
+    curl -I http://127.0.0.1 | head -n 1
+
  
