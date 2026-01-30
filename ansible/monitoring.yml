@@ -1,41 +1,30 @@
-- name: Deploy Monitoring Stack (Prometheus + Grafana)
-  hosts: web
+---
+- name: Deploy monitoring stack (Prometheus + Grafana)
+  hosts: all
   become: true
 
-  vars:
-    monitoring_dir: /opt/monitoring
-    prometheus_dir: /opt/monitoring/prometheus
-
   tasks:
-    - name: Ensure monitoring directories exist
+    - name: Ensure monitoring directory exists
       file:
-        path: "{{ item }}"
+        path: /opt/monitoring
         state: directory
         mode: "0755"
-      loop:
-        - "{{ monitoring_dir }}"
-        - "{{ prometheus_dir }}"
 
-    - name: Copy docker-compose.yml to server
+    - name: Copy monitoring docker-compose.yml
       copy:
-        src: ../monitoring/docker-compose.yml
-        dest: "{{ monitoring_dir }}/docker-compose.yml"
+        src: files/monitoring/docker-compose.yml
+        dest: /opt/monitoring/docker-compose.yml
         mode: "0644"
 
-    - name: Copy prometheus.yml to server
-      copy:
-        src: ../monitoring/prometheus.yml
-        dest: "{{ prometheus_dir }}/prometheus.yml"
-        mode: "0644"
-
-    - name: Install docker compose plugin (if missing)
+    - name: Install Docker Compose plugin (if missing)
       apt:
         name: docker-compose-plugin
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Start monitoring stack
       shell: |
-        cd {{ monitoring_dir }}
-        docker compose up -d
+        docker compose -f /opt/monitoring/docker-compose.yml up -d
+      args:
+        executable: /bin/bash
 
