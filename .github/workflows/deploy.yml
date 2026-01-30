@@ -39,6 +39,11 @@ jobs:
             -backend-config="dynamodb_table=${TABLE}" \
             -backend-config="encrypt=true"
 
+      - name: Terraform Force Unlock (if stuck)
+        working-directory: terraform
+        run: |
+          terraform force-unlock -force eeec5405-d72e-db12-754a-bbde531f647d || true
+
       - name: Terraform Apply
         working-directory: terraform
         run: |
