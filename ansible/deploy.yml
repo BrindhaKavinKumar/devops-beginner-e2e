@@ -82,7 +82,28 @@
         state: started
         enabled: true
 
-    - name: Run nginx container on port 80
+    - name: Free port 80 and run nginx container
       shell: |
+        set -e
+
+        echo "== Who is using port 80? =="
+        ss -lntp | grep ':80' || true
+
+        echo "== Stop host webservers if running =="
+        systemctl stop nginx 2>/dev/null || true
+        systemctl stop apache2 2>/dev/null || true
+
+        echo "== Kill any container publishing port 80 =="
+        docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | grep ':80->' || true
+        IDS=$(docker ps -q --filter "publish=80")
+        if [ -n "$IDS" ]; then docker rm -f $IDS; fi
+
+        echo "== Remove old 'web' container if exists =="
         docker rm -f web 2>/dev/null || true
+
+        echo "== Run nginx on port 80 =="
         docker run -d --name web --restart unless-stopped -p 80:80 nginx:alpine
+
+        echo "== Verify locally =="
+        curl -I http://127.0.0.1 | head -n 1
+ 
