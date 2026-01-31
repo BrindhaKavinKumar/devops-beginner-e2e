@@ -31,32 +31,16 @@ data "aws_ami" "ubuntu" {
 # -------------------------
 # Security Group (SSH + HTTP)
 # -------------------------
+data "aws_vpc" "default" {
+  default = true
+}
+
 resource "aws_security_group" "web_sg" {
-  name        = "devops-beginner-web-sg"
-  description = "Allow SSH and HTTP"
+  name_prefix = "devops-beginner-web-sg-"
+  description = "Allow SSH, HTTP, Grafana, Prometheus, Node Exporter"
+  vpc_id      = data.aws_vpc.default.id
 
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 9100
-    to_port     = 9100
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-
+  # SSH
   ingress {
     description = "SSH"
     from_port   = 22
@@ -65,6 +49,7 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # HTTP
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -73,6 +58,34 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Grafana
+  ingress {
+    description = "Grafana"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Prometheus
+  ingress {
+    description = "Prometheus"
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Node Exporter
+  ingress {
+    description = "Node Exporter"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Outbound
   egress {
     from_port   = 0
     to_port     = 0
@@ -80,10 +93,17 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  revoke_rules_on_delete = true
+
   tags = {
     Name = "devops-beginner-web-sg"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
+
 
 # -------------------------
 # EC2 Instance

@@ -85,8 +85,7 @@ jobs:
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/monitoring.yml \
             -u ubuntu \
-            --private-key devops-beginner-key.pem \
-            --ssh-common-args='-o StrictHostKeyChecking=no'
-     
+            #--private-key devops-beginner-key.pem \
+            #--ssh-common-args='-o StrictHostKeyChecking=no'
             --private-key ~/.ssh/devops-beginner-key.pem \
             --ssh-common-args='-o StrictHostKeyChecking=no'
