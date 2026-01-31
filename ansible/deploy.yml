@@ -4,14 +4,9 @@
   become: true
 
   tasks:
-<<<<<<< HEAD
-    - name: Update apt and install base dependencies
-=======
-    - name: Apt update + basic deps
->>>>>>> a0e6fab (Add monitoring and update deploy)
+    - name: Update apt + install base deps
       apt:
-        update_cache: yes
-        cache_valid_time: 3600
+        update_cache: true
         name:
           - ca-certificates
           - curl
@@ -19,39 +14,18 @@
           - lsb-release
         state: present
 
-<<<<<<< HEAD
-    - name: Unhold docker related packages if any
-      shell: |
-        apt-mark unhold docker.io docker-ce docker-ce-cli containerd containerd.io || true
-      args:
-        executable: /bin/bash
-
-    - name: Remove old or conflicting docker packages
-=======
-    - name: Remove old/conflicting Docker packages (safe if not installed)
->>>>>>> a0e6fab (Add monitoring and update deploy)
+    - name: Remove old/conflicting docker packages if any
       apt:
         name:
           - docker.io
           - docker-doc
           - docker-compose
-          - docker-compose-v2
           - podman-docker
           - containerd
           - runc
         state: absent
-<<<<<<< HEAD
-        purge: yes
       ignore_errors: true
 
-    - name: Autoremove unused packages
-      apt:
-        autoremove: yes
-
-=======
-      ignore_errors: true
-
->>>>>>> a0e6fab (Add monitoring and update deploy)
     - name: Create keyrings directory
       file:
         path: /etc/apt/keyrings
@@ -60,50 +34,25 @@
 
     - name: Add Docker GPG key
       shell: |
-<<<<<<< HEAD
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-        chmod a+r /etc/apt/keyrings/docker.gpg
-      args:
-        executable: /bin/bash
-        creates: /etc/apt/keyrings/docker.gpg
-
-    - name: Add Docker repository
-      shell: |
-        ARCH=$(dpkg --print-architecture)
-        CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
-        echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.gpg] \
-        https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
-        > /etc/apt/sources.list.d/docker.list
-      args:
-        executable: /bin/bash
-        creates: /etc/apt/sources.list.d/docker.list
-
-    - name: Update apt after adding Docker repo
-      apt:
-        update_cache: yes
-
-    - name: Install Docker Engine (official)
-=======
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
         chmod a+r /etc/apt/keyrings/docker.gpg
       args:
-        creates: /etc/apt/keyrings/docker.gpg
+        executable: /bin/bash
 
     - name: Add Docker apt repo
       shell: |
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-        https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
-        > /etc/apt/sources.list.d/docker.list
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+          > /etc/apt/sources.list.d/docker.list
       args:
-        creates: /etc/apt/sources.list.d/docker.list
+        executable: /bin/bash
 
-    - name: Apt update (after adding Docker repo)
+    - name: Apt update after adding Docker repo
       apt:
-        update_cache: yes
+        update_cache: true
 
-    - name: Install Docker Engine
->>>>>>> a0e6fab (Add monitoring and update deploy)
+    - name: Install Docker Engine (official)
       apt:
         name:
           - docker-ce
@@ -113,47 +62,28 @@
           - docker-compose-plugin
         state: present
 
-    - name: Ensure Docker service is running
+    - name: Ensure Docker service running
       service:
         name: docker
         state: started
         enabled: true
 
-<<<<<<< HEAD
-    - name: Free port 80 and run nginx container
+    - name: Stop any service using port 80 (nginx/apache) if installed
       shell: |
-        set -e
-
-        echo "Checking port 80 usage"
-        ss -lntp | grep ':80' || true
-
-        echo "Stopping host web servers if any"
         systemctl stop nginx 2>/dev/null || true
         systemctl stop apache2 2>/dev/null || true
-=======
-    - name: Run nginx container on port 80
-      shell: |
-        docker rm -f web 2>/dev/null || true
-        docker run -d --name web --restart unless-stopped -p 80:80 nginx:alpine
->>>>>>> a0e6fab (Add monitoring and update deploy)
-
-        echo "Removing containers publishing port 80"
-        IDS=$(docker ps -q --filter publish=80)
-        if [ -n "$IDS" ]; then
-          docker rm -f $IDS
-        fi
-
-        echo "Removing old container named web"
-        docker rm -f web 2>/dev/null || true
-
-        echo "Starting nginx container"
-        docker run -d \
-          --name web \
-          --restart unless-stopped \
-          -p 80:80 \
-          nginx:alpine
-
-        echo "Local verification"
-        curl -I http://127.0.0.1 | head -n 1
       args:
         executable: /bin/bash
+
+    - name: Remove old 'web' container if exists
+      shell: |
+        docker rm -f web 2>/dev/null || true
+      args:
+        executable: /bin/bash
+
+    - name: Run nginx container on port 80
+      shell: |
+        docker run -d --name web --restart unless-stopped -p 80:80 nginx:alpine
+      args:
+        executable: /bin/bash
+
